@@ -21,8 +21,20 @@ func StringInSlice(sliceString []string, needle string) bool {
 func RemoteIP(ipLookups []string, forwardedForIndexFromBehind int, r *http.Request) string {
 	realIP := r.Header.Get("X-Real-IP")
 	forwardedFor := r.Header.Get("X-Forwarded-For")
+	customHeaderIP := r.Header.Get("X-Custom-IP")
+	customIPParam := r.Header.Get("X-Custom-IP-Param")
+	if customIPParam == "" {
+		customIPParam = "ip"
+	}
+	customParamIP := r.URL.Query().Get(customIPParam)
 
 	for _, lookup := range ipLookups {
+		if lookup == "X-Custom-IP-Param" && customParamIP != "" {
+			return customParamIP
+		}
+		if lookup == "X-Custom-IP" && customHeaderIP != "" {
+			return customHeaderIP
+		}
 		if lookup == "RemoteAddr" {
 			// 1. Cover the basic use cases for both ipv4 and ipv6
 			ip, _, err := net.SplitHostPort(r.RemoteAddr)
